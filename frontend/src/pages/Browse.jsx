@@ -3,8 +3,6 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import LockerCard from '../components/LockerCard';
 import BookingModal from '../components/BookingModal';
-// Import sampleLockers to use as a fallback data source
-import { sampleLockers } from '../data/sampleLockers';
 
 export default function Browse() {
   const { user } = useAuth();
@@ -20,40 +18,9 @@ export default function Browse() {
     if (filters.city) params.city = filters.city;
     if (filters.size) params.size = filters.size;
     if (filters.maxPrice) params.maxPrice = filters.maxPrice;
-
-    try {
-      const res = await api.get('/lockers', { params });
-      if (res.data && res.data.length > 0) {
-        setLockers(res.data);
-      } else {
-        // Fallback if API returned empty array
-        applyLocalFilters();
-      }
-    } catch (error) {
-      // Fallback if API is unreachable
-      applyLocalFilters();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Helper to filter sample lockers locally when backend is missing/empty
-  const applyLocalFilters = () => {
-    let filtered = [...sampleLockers];
-    
-    if (filters.city) {
-      filtered = filtered.filter(l => 
-        l.city.toLowerCase().includes(filters.city.toLowerCase())
-      );
-    }
-    if (filters.size) {
-      filtered = filtered.filter(l => l.size === filters.size);
-    }
-    if (filters.maxPrice) {
-      filtered = filtered.filter(l => l.price <= Number(filters.maxPrice));
-    }
-    
-    setLockers(filtered);
+    const res = await api.get('/lockers', { params });
+    setLockers(res.data);
+    setLoading(false);
   };
 
   useEffect(() => {

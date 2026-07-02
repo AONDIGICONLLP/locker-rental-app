@@ -1,6 +1,6 @@
 require('dotenv').config();
 const allowedOrigins = [
-  'http://localhost:6075', // Local development
+  'http://localhost:5173/', // Local development
 ];
 const express = require('express');
 const cors = require('cors');
@@ -13,15 +13,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(new Error('CORS policy violation'), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true
+  origin: 'http://localhost:5173',
+  credentials: true // Enable if you send cookies/sessions
 }));
 app.use(express.json());
 
