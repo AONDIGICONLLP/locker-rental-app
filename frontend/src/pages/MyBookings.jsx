@@ -6,10 +6,15 @@ export default function MyBookings() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
-    setLoading(true);
-    const res = await api.get('/bookings/mine');
-    setBookings(res.data);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const res = await api.get('/bookings/mine');
+      setBookings(res.data || []);
+    } catch (err) {
+      console.error("Failed to load user bookings runtime array:", err);
+    } {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -18,8 +23,12 @@ export default function MyBookings() {
 
   const handleCancel = async (id) => {
     if (!confirm('Cancel this booking?')) return;
-    await api.put(`/bookings/${id}/cancel`);
-    fetchData();
+    try {
+      await api.put(`/bookings/${id}/cancel`);
+      fetchData();
+    } catch (err) {
+      alert("Failed to process transaction cancel operation.");
+    }
   };
 
   return (
@@ -33,31 +42,41 @@ export default function MyBookings() {
         <p className="text-stone-400">You haven't booked any lockers yet.</p>
       ) : (
         <div className="space-y-3">
-          {bookings.map((b) => (
-            <div key={b.id} className="bg-white rounded-2xl border border-stone-200 p-4 flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <p className="font-semibold text-stone-800">{b.lockerTitle}</p>
-                {b.locker && <p className="text-sm text-stone-500">📍 {b.locker.address}, {b.locker.city}</p>}
-                <p className="text-sm text-stone-500">
-                  From {b.startDate} for {b.durationMonths} month(s) · ₹{b.totalPrice}
-                </p>
+          {bookings.map((b) => {
+            const currentId = b.Id || b.id;
+            const currentStatus = String(b.Status || b.status).toLowerCase();
+            
+            // Handles both nested data objects and flattened table joins
+            const displayAddress = b.locker?.address || b.Address || '';
+            const displayCity = b.locker?.city || b.City || '';
+            const title = b.lockerTitle || b.Title || 'Locker Storage Unit';
+
+            return (
+              <div key={currentId} className="bg-white rounded-2xl border border-stone-200 p-4 flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <p className="font-semibold text-stone-800">{title}</p>
+                  {(displayAddress || displayCity) && (
+                    <p className="text-sm text-stone-500">📍 {displayAddress} {displayCity && `, ${displayCity}`}</p>
+                  )}
+                  <p className="text-sm text-stone-500">
+                    From {b.startDate || b.StartDate} for {b.durationMonths || b.DurationMonths} month(s) · ₹{b.totalPrice || b.TotalPrice}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                    currentStatus === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-200 text-stone-600'
+                  }`}>
+                    {currentStatus}
+                  </span>
+                  {currentStatus === 'active' && (
+                    <button onClick={() => handleCancel(currentId)} className="text-sm text-red-600 hover:underline">
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span
-                  className={`text-xs font-medium px-2 py-1 rounded-full ${
-                    b.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-200 text-stone-600'
-                  }`}
-                >
-                  {b.status}
-                </span>
-                {b.status === 'active' && (
-                  <button onClick={() => handleCancel(b.id)} className="text-sm text-red-600 hover:underline">
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
